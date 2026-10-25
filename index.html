@@ -33,7 +33,7 @@
     function makeFirefly() {
       return {
         x: random(0, width),
-        y: random(0, height),
+        y: random(height / 2, height),
         heading: random(0, Math.PI * 2),
         turn: 0,
         speed: random(0.15, 0.45),
@@ -59,12 +59,16 @@
       f.x += Math.cos(f.heading) * f.speed;
       f.y += Math.sin(f.heading) * f.speed;
 
-      // Wrap around the edges so nobody gets lost.
+      // Wrap around the left and right edges so nobody gets lost.
       const pad = 20;
       if (f.x < -pad) f.x = width + pad;
       if (f.x > width + pad) f.x = -pad;
-      if (f.y < -pad) f.y = height + pad;
-      if (f.y > height + pad) f.y = -pad;
+
+      // Stay in the lower half of the screen: bounce off the middle
+      // and the bottom edge.
+      const top = height / 2;
+      if (f.y < top) { f.y = top; f.heading = -f.heading; }
+      if (f.y > height) { f.y = height; f.heading = -f.heading; }
     }
 
     function draw(f, glow) {
