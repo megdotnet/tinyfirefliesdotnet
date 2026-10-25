@@ -34,7 +34,7 @@
     function makeFirefly() {
       return {
         x: random(0, width),
-        y: random(height / 2, height),
+        y: random(height * 2 / 3, height),
         heading: random(0, Math.PI * 2),
         turn: 0,
         speed: random(0.15, 0.45),
@@ -65,9 +65,9 @@
       if (f.x < -pad) f.x = width + pad;
       if (f.x > width + pad) f.x = -pad;
 
-      // Stay in the lower half of the screen: bounce off the middle
+      // Stay in the lower third of the screen: bounce off its top
       // and the bottom edge.
-      const top = height / 2;
+      const top = height * 2 / 3;
       if (f.y < top) { f.y = top; f.heading = -f.heading; }
       if (f.y > height) { f.y = height; f.heading = -f.heading; }
     }
