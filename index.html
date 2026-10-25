@@ -6,6 +6,7 @@
   <title>Tiny Fireflies</title>
   <style>
     html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+    body { background: #000 url(night-sky.jpg) center bottom / cover no-repeat; }
     canvas { display: block; width: 100vw; height: 100vh; }
   </style>
 </head>
@@ -33,14 +34,14 @@
     function makeFirefly() {
       return {
         x: random(0, width),
-        y: random(0, height),
+        y: random(height * 2 / 3, height),
         heading: random(0, Math.PI * 2),
         turn: 0,
         speed: random(0.15, 0.45),
         size: random(1, 2),
-        period: random(4, 8),         // seconds between flashes
-        phase: random(0, 8),          // where in its cycle it starts
-        flashLength: random(0.4, 0.8) // seconds a flash lasts
+        period: random(8, 14),        // seconds between flashes
+        phase: random(0, 14),         // where in its cycle it starts
+        flashLength: random(1, 1.8)   // seconds a flash lasts
       };
     }
 
@@ -59,12 +60,16 @@
       f.x += Math.cos(f.heading) * f.speed;
       f.y += Math.sin(f.heading) * f.speed;
 
-      // Wrap around the edges so nobody gets lost.
+      // Wrap around the left and right edges so nobody gets lost.
       const pad = 20;
       if (f.x < -pad) f.x = width + pad;
       if (f.x > width + pad) f.x = -pad;
-      if (f.y < -pad) f.y = height + pad;
-      if (f.y > height + pad) f.y = -pad;
+
+      // Stay in the lower third of the screen: bounce off its top
+      // and the bottom edge.
+      const top = height * 2 / 3;
+      if (f.y < top) { f.y = top; f.heading = -f.heading; }
+      if (f.y > height) { f.y = height; f.heading = -f.heading; }
     }
 
     function draw(f, glow) {
