@@ -5,17 +5,96 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Tiny Fireflies</title>
   <style>
-    body { margin: 0; min-height: 100vh; display: grid; place-items: center;
-           background: #0d1424; color: #f4ecd0; font-family: Georgia, serif; text-align: center; }
-    h1 { font-size: clamp(2rem, 6vw, 3.5rem); margin: 0 0 .5rem; }
-    p { opacity: .8; }
-    .glow { color: #ffe27a; text-shadow: 0 0 12px #ffd23f; }
+    html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+    canvas { display: block; width: 100vw; height: 100vh; }
   </style>
 </head>
 <body>
-  <main>
-    <h1>Tiny Fireflies <span class="glow">✦</span></h1>
-    <p>Something small and bright is on its way.</p>
-  </main>
+  <canvas id="sky" aria-label="Fireflies blinking in the dark"></canvas>
+  <script>
+    const MAX_FIREFLIES = 25;
+    const canvas = document.getElementById('sky');
+    const ctx = canvas.getContext('2d');
+    let width, height, fireflies = [];
+
+    function resize() {
+      const dpr = window.devicePixelRatio || 1;
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function random(min, max) { return min + Math.random() * (max - min); }
+
+    // Each firefly drifts slowly, wandering in gentle curves, and flashes
+    // every few seconds before going nearly dark again.
+    function makeFirefly() {
+      return {
+        x: random(0, width),
+        y: random(0, height),
+        heading: random(0, Math.PI * 2),
+        turn: 0,
+        speed: random(0.15, 0.45),
+        size: random(1, 2),
+        period: random(4, 8),         // seconds between flashes
+        phase: random(0, 8),          // where in its cycle it starts
+        flashLength: random(0.4, 0.8) // seconds a flash lasts
+      };
+    }
+
+    // Brightness from 0 to 1: a smooth rise and fall during the flash,
+    // and a faint ember the rest of the time.
+    function brightness(f, t) {
+      const inCycle = (t + f.phase) % f.period;
+      if (inCycle > f.flashLength) return 0.04;
+      return 0.04 + 0.96 * Math.sin(Math.PI * inCycle / f.flashLength);
+    }
+
+    function update(f) {
+      f.turn += random(-0.02, 0.02);
+      f.turn *= 0.95;
+      f.heading += f.turn;
+      f.x += Math.cos(f.heading) * f.speed;
+      f.y += Math.sin(f.heading) * f.speed;
+
+      // Wrap around the edges so nobody gets lost.
+      const pad = 20;
+      if (f.x < -pad) f.x = width + pad;
+      if (f.x > width + pad) f.x = -pad;
+      if (f.y < -pad) f.y = height + pad;
+      if (f.y > height + pad) f.y = -pad;
+    }
+
+    function draw(f, glow) {
+      const radius = f.size * 6;
+      const halo = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, radius);
+      halo.addColorStop(0, `rgba(220, 255, 120, ${0.9 * glow})`);
+      halo.addColorStop(0.25, `rgba(190, 240, 60, ${0.35 * glow})`);
+      halo.addColorStop(1, 'rgba(160, 220, 40, 0)');
+      ctx.fillStyle = halo;
+      ctx.beginPath();
+      ctx.arc(f.x, f.y, radius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function frame(ms) {
+      const t = ms / 1000;
+      ctx.clearRect(0, 0, width, height);
+      for (const f of fireflies) {
+        update(f);
+        draw(f, brightness(f, t));
+      }
+      requestAnimationFrame(frame);
+    }
+
+    resize();
+    // Fewer fireflies on small screens, never more than MAX_FIREFLIES.
+    const count = Math.min(MAX_FIREFLIES, Math.max(10, Math.round(width * height / 40000)));
+    for (let i = 0; i < count; i++) fireflies.push(makeFirefly());
+    window.addEventListener('resize', resize);
+    requestAnimationFrame(frame);
+  </script>
 </body>
 </html>
